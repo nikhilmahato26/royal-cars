@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+}
+
+model Car {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  brand        String
+  color        String
+  category     String
+  seats        Int
+  fuelType     String
+  transmission String
+  pricePerDay  Decimal   @db.Decimal(10, 2)
+  images       String[]
+  features     String[]
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+  enquiries    Enquiry[]
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingSource {
+  ONLINE
+  OFFLINE
+}
+
+model Booking {
+  id                   String        @id @default(cuid())
+  bookingRef           String        @unique
+  carId                String
+  car                  Car           @relation(fields: [carId], references: [id])
+  customerName         String
+  customerEmail        String
+  customerPhone        String
+  startDate            DateTime      @db.Date
+  endDate              DateTime      @db.Date
+  pricePerDayAtBooking Decimal       @db.Decimal(10, 2)
+  totalAmount          Decimal       @db.Decimal(10, 2)
+  status               BookingStatus @default(CONFIRMED)
+  source               BookingSource @default(ONLINE)
+  razorpayOrderId      String?       @unique
+  razorpayPaymentId    String?       @unique
+  notes                String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([carId, startDate, endDate])
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+model Enquiry {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  carId     String?
+  car       Car?          @relation(fields: [carId], references: [id])
+  message   String
+  status    EnquiryStatus @default(NEW)
+  createdAt DateTime      @default(now())
+}
